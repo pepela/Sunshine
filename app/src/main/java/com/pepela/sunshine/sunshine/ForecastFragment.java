@@ -1,5 +1,6 @@
 package com.pepela.sunshine.sunshine;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.nfc.Tag;
 import android.os.AsyncTask;
@@ -12,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import android.view.MenuInflater;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -58,6 +61,7 @@ public class ForecastFragment extends Fragment {
 
         forecastListView = (ListView) rootView.findViewById(R.id.listview_forecast);
 
+
         String[] forecastList = {
                 "Nothing to show"
         };
@@ -72,6 +76,19 @@ public class ForecastFragment extends Fragment {
 
         forecastListView.setAdapter(forecastAdapter);
 
+        forecastListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                String forecast = forecastAdapter.getItem(position);
+                if (forecast != null) {
+                    Intent detailIntent = new Intent(getContext(), DetailActivity.class);
+                    detailIntent.putExtra(Intent.EXTRA_TEXT, forecast);
+                    startActivity(detailIntent);
+                }
+
+            }
+        });
 
         return rootView;
     }
