@@ -1,9 +1,12 @@
 package com.pepela.sunshine.sunshine;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.nfc.Tag;
 import android.os.AsyncTask;
+import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.text.format.Time;
@@ -42,6 +45,8 @@ public class ForecastFragment extends Fragment {
     private ListView forecastListView;
     ArrayAdapter<String> forecastAdapter;
 
+    private final String TAG = FletchForecastData.class.getSimpleName();
+
     public ForecastFragment() {
 
     }
@@ -53,6 +58,12 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        UpdateWeather();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
@@ -61,18 +72,11 @@ public class ForecastFragment extends Fragment {
 
         forecastListView = (ListView) rootView.findViewById(R.id.listview_forecast);
 
-
-        String[] forecastList = {
-                "Nothing to show"
-        };
-
-        ArrayList<String> forecastListItems = new ArrayList<>(Arrays.asList(forecastList));
-
         forecastAdapter = new ArrayAdapter<>(
                 getActivity(),
                 R.layout.list_item_forecast,
                 R.id.list_item_forecast_textview,
-                forecastListItems);
+                new ArrayList<String>());
 
         forecastListView.setAdapter(forecastAdapter);
 
@@ -108,8 +112,7 @@ public class ForecastFragment extends Fragment {
 
         switch (id) {
             case R.id.action_refresh:
-                FletchForecastData fletchForecastTask = new FletchForecastData();
-                fletchForecastTask.execute("Tallinn");
+                UpdateWeather();
 
                 return true;
         }
@@ -117,10 +120,18 @@ public class ForecastFragment extends Fragment {
     }
 
 
+    private void UpdateWeather() {
+        FletchForecastData fletchForecastTask = new FletchForecastData();
+
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        String location = sharedPrefs.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+
+
+        fletchForecastTask.execute(location);
+    }
+
     public class FletchForecastData extends AsyncTask<String, Void, String[]> {
 
-
-        private final String TAG = FletchForecastData.class.getSimpleName();
         String format = "metric";
         String mode = "json";
         String api_key = "29059b9fe3e0818bf9bf59b7e3892d31";
@@ -240,6 +251,16 @@ public class ForecastFragment extends Fragment {
      * Prepare the weather high/lows for presentation.
      */
     private String formatHighLows(double high, double low) {
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        String unit = sharedPrefs.getString(getString(R.string.pref_units_key), getString(R.string.pref_units_default));
+
+        if (unit.equals(getString(R.string.pref_units_imperial))) {
+            high = (high * 1.8) + 32;
+            low = (low * 1.8) + 32;
+        } else if (!unit.equals(getString(R.string.pref_units_metric))) {
+            Log.e(TAG, "Unit not found: " + unit);
+        }
+
         // For presentation, assume the user doesn't care about tenths of a degree.
         long roundedHigh = Math.round(high);
         long roundedLow = Math.round(low);

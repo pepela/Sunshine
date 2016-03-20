@@ -7,4 +7,12 @@
     <string name="pref_location_default" translatable="false">Tallinn</string>
     <string name="pref_location_title">Location</string>
     <string name="pref_location_key" translatable="false">location</string>
+    <string name="pref_units_default">Metric</string>
+    <string name="pref_units_title">Units</string>
+    <string name="pref_units_key">units</string>
+    <string name="pref_units_summary">Choose preferred units</string>
+    <string name="pref_units_metric">Metric</string>
+    <string name="pref_units_imperial">Imperial</string>
+    <string name="action_view_on_map">Map</string>
+    <string name="action_share">Share</string>
 </resources>

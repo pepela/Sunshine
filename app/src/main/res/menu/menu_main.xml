@@ -2,7 +2,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.pepela.sunshine.sunshine.MainActivity">
-
+    <item
+        android:id="@+id/action_view_location_on_map"
+        android:orderInCategory="50"
+        android:title="@string/action_view_on_map"
+        app:showAsAction="never" />
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
