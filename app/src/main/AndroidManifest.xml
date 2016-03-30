@@ -10,6 +10,9 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <provider
+            android:authorities="com.pepela.sunshine.sunshine"
+            android:name=".data.WeatherProvider"/>
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
