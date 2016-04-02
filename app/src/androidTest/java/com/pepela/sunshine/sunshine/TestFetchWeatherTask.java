@@ -1,7 +1,6 @@
 package com.pepela.sunshine.sunshine;
 
 
-
 import android.annotation.TargetApi;
 import android.database.Cursor;
 import android.test.AndroidTestCase;
@@ -22,7 +21,7 @@ public class TestFetchWeatherTask extends AndroidTestCase {
                 WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
                 new String[]{ADD_LOCATION_SETTING});
 
-        FletchForecastData fwt = new FletchForecastData(getContext(), null);
+        FletchForecastData fwt = new FletchForecastData(getContext());
         long locationId = fwt.addLocation(ADD_LOCATION_SETTING, ADD_LOCATION_CITY,
                 ADD_LOCATION_LAT, ADD_LOCATION_LON);
 

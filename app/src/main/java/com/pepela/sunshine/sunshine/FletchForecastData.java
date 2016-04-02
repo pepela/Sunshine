@@ -35,7 +35,7 @@ import com.pepela.sunshine.sunshine.data.WeatherContract.WeatherEntry;
 /**
  * Created by giorg_000 on 29.03.2016.
  */
-public class FletchForecastData extends AsyncTask<String, Void, String[]> {
+public class FletchForecastData extends AsyncTask<String, Void, Void> {
 
     String format = "metric";
     String mode = "json";
@@ -45,17 +45,15 @@ public class FletchForecastData extends AsyncTask<String, Void, String[]> {
 
     private final String TAG = FletchForecastData.class.getSimpleName();
 
-    private ArrayAdapter<String> mForecastAdapter;
     private final Context mContext;
 
-    public FletchForecastData(Context context, ArrayAdapter<String> forecastAdapter) {
+    public FletchForecastData(Context context) {
         mContext = context;
-        mForecastAdapter = forecastAdapter;
     }
 
 
     @Override
-    protected String[] doInBackground(String... params) {
+    protected Void doInBackground(String... params) {
 
         String locationQuery = params[0];
 
@@ -144,35 +142,9 @@ public class FletchForecastData extends AsyncTask<String, Void, String[]> {
         return null;
     }
 
-    @Override
-    protected void onPostExecute(String[] strings) {
-        super.onPostExecute(strings);
 
-        if (strings != null && mForecastAdapter != null) {
-            mForecastAdapter.clear();
-            mForecastAdapter.addAll(strings);
-        }
-
-    }
-
-    String[] convertContentValuesToUXFormat(Vector<ContentValues> cvv) {
-        // return strings to keep UI functional for now
-        String[] resultStrs = new String[cvv.size()];
-        for (int i = 0; i < cvv.size(); i++) {
-            ContentValues weatherValues = cvv.elementAt(i);
-            String highAndLow = formatHighLows(
-                    weatherValues.getAsDouble(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP),
-                    weatherValues.getAsDouble(WeatherEntry.COLUMN_MIN_TEMP));
-            resultStrs[i] = getReadableDateString(
-                    weatherValues.getAsLong(WeatherEntry.COLUMN_DATE)) +
-                    " - " + weatherValues.getAsString(WeatherEntry.COLUMN_SHORT_DESC) +
-                    " - " + highAndLow;
-        }
-        return resultStrs;
-    }
-
-    private String[] getWeatherDataFromJson(String forecastJsonStr,
-                                            String locationSetting)
+    private Void getWeatherDataFromJson(String forecastJsonStr,
+                                        String locationSetting)
             throws JSONException {
 
         // Now we have a String representing the complete forecast in JSON Format.
@@ -298,72 +270,22 @@ public class FletchForecastData extends AsyncTask<String, Void, String[]> {
                 cVVector.add(weatherValues);
             }
 
+            int inserted = 0;
             // add to database
             if (cVVector.size() > 0) {
                 ContentValues[] cvArray = new ContentValues[cVVector.size()];
                 cVVector.toArray(cvArray);
-                mContext.getContentResolver().bulkInsert(WeatherEntry.CONTENT_URI, cvArray);
+                inserted = mContext.getContentResolver().bulkInsert(WeatherEntry.CONTENT_URI, cvArray);
             }
 
-            // Sort order:  Ascending, by date.
-            String sortOrder = WeatherEntry.COLUMN_DATE + " ASC";
-            Uri weatherForLocationUri = WeatherEntry.buildWeatherLocationWithStartDate(
-                    locationSetting, System.currentTimeMillis());
+            Log.d(TAG, "FetchWeatherTask Complete. " + Integer.toString(inserted) + " Inserted");
 
-            // Students: Uncomment the next lines to display what what you stored in the bulkInsert
-            Cursor cur = mContext.getContentResolver().query(weatherForLocationUri,
-                    null, null, null, sortOrder);
-
-            cVVector = new Vector<ContentValues>(cur.getCount());
-            if (cur.moveToFirst()) {
-                do {
-                    ContentValues cv = new ContentValues();
-                    DatabaseUtils.cursorRowToContentValues(cur, cv);
-                    cVVector.add(cv);
-                } while (cur.moveToNext());
-            }
-
-            Log.d(TAG, "FetchWeatherTask Complete. " + cVVector.size() + " Inserted");
-
-            String[] resultStrs = convertContentValuesToUXFormat(cVVector);
-            return resultStrs;
 
         } catch (JSONException e) {
             Log.e(TAG, e.getMessage(), e);
             e.printStackTrace();
         }
         return null;
-    }
-
-
-    private String getReadableDateString(long time) {
-        // Because the API returns a unix timestamp (measured in seconds),
-        // it must be converted to milliseconds in order to be converted to valid date.
-        SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("EEE MMM dd");
-        return shortenedDateFormat.format(time);
-    }
-
-    /**
-     * Prepare the weather high/lows for presentation.
-     */
-    private String formatHighLows(double high, double low) {
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        String unit = sharedPrefs.getString(mContext.getString(R.string.pref_units_key), mContext.getString(R.string.pref_units_default));
-
-        if (unit.equals(mContext.getString(R.string.pref_units_imperial))) {
-            high = (high * 1.8) + 32;
-            low = (low * 1.8) + 32;
-        } else if (!unit.equals(
-                mContext.getString(R.string.pref_units_metric))) {
-            Log.e(TAG, "Unit not found: " + unit);
-        }
-
-        // For presentation, assume the user doesn't care about tenths of a degree.
-        long roundedHigh = Math.round(high);
-        long roundedLow = Math.round(low);
-
-        String highLowStr = roundedHigh + "/" + roundedLow;
-        return highLowStr;
     }
 
 
