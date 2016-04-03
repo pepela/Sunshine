@@ -1,5 +1,6 @@
 package com.pepela.sunshine.sunshine;
 
+import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
@@ -22,12 +23,36 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String FORECASTFRAGMENT_TAG = "FORECAST_FRAGMENT_TAG";
+    private String mLocation;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_container, new ForecastFragment(), FORECASTFRAGMENT_TAG)
+                    .commit();
+        }
+
+        mLocation = Utility.getPreferredLocation(this);
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (mLocation != Utility.getPreferredLocation(this)) {
+            ForecastFragment ff = (ForecastFragment) getSupportFragmentManager().findFragmentByTag(FORECASTFRAGMENT_TAG);
+            if (ff != null)
+                ff.onLocationChanged();
+            mLocation = Utility.getPreferredLocation(this);
+        }
     }
 
     @Override
