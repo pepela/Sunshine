@@ -3,19 +3,13 @@ package com.pepela.sunshine.sunshine;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
-import android.widget.ArrayAdapter;
 
 import com.pepela.sunshine.sunshine.data.WeatherContract;
-import com.pepela.sunshine.sunshine.data.WeatherDbHelper;
-import com.pepela.sunshine.sunshine.data.WeatherProvider;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,7 +21,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.Vector;
 
 import com.pepela.sunshine.sunshine.data.WeatherContract.WeatherEntry;
