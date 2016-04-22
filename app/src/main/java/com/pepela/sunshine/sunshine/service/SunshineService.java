@@ -1,11 +1,16 @@
-package com.pepela.sunshine.sunshine;
+package com.pepela.sunshine.sunshine.service;
 
+import android.app.IntentService;
+import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
+import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.text.format.Time;
 import android.util.Log;
 
@@ -23,32 +28,28 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Vector;
 
-import com.pepela.sunshine.sunshine.data.WeatherContract.WeatherEntry;
-
 /**
- * Created by giorg_000 on 29.03.2016.
+ * Created by giorg_000 on 20.04.2016.
  */
-public class FletchForecastData extends AsyncTask<String, Void, Void> {
+public class SunshineService extends IntentService {
+
+    public static final String LOCATION_QUERY_EXTRA = "location_query_extra";
 
     String format = "metric";
     String mode = "json";
     String api_key = "29059b9fe3e0818bf9bf59b7e3892d31";
     int numDays = 7;
 
+    private final String TAG = SunshineService.class.getSimpleName();
 
-    private final String TAG = FletchForecastData.class.getSimpleName();
 
-    private final Context mContext;
-
-    public FletchForecastData(Context context) {
-        mContext = context;
+    public SunshineService() {
+        super("SunshineService");
     }
 
-
     @Override
-    protected Void doInBackground(String... params) {
-
-        String locationQuery = params[0];
+    protected void onHandleIntent(Intent intent) {
+        String locationQuery = intent.getStringExtra(LOCATION_QUERY_EXTRA);
 
         // These two need to be declared outside the try/catch
         // so that they can be closed in the finally block.
@@ -59,9 +60,6 @@ public class FletchForecastData extends AsyncTask<String, Void, Void> {
         String forecastJsonStr;
 
         try {
-            // Construct the URL for the OpenWeatherMap query
-            // Possible parameters are avaiable at OWM's forecast API page, at
-            // http://openweathermap.org/API#forecast
 
             final String FORECAST_BASE_URL =
                     "http://api.openweathermap.org/data/2.5/forecast/city?";
@@ -74,7 +72,7 @@ public class FletchForecastData extends AsyncTask<String, Void, Void> {
 
             Uri builtUri = Uri.parse(FORECAST_BASE_URL)
                     .buildUpon()
-                    .appendQueryParameter(QUERY_PARAM, params[0])
+                    .appendQueryParameter(QUERY_PARAM, locationQuery)
                     .appendQueryParameter(FORMAT_PARAM, mode)
                     .appendQueryParameter(UNITS_PARAM, format)
                     .appendQueryParameter(APP_ID, api_key)
@@ -93,7 +91,6 @@ public class FletchForecastData extends AsyncTask<String, Void, Void> {
             StringBuffer buffer = new StringBuffer();
             if (inputStream == null) {
                 // Nothing to do.
-                return null;
             }
             reader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -107,19 +104,17 @@ public class FletchForecastData extends AsyncTask<String, Void, Void> {
 
             if (buffer.length() == 0) {
                 // Stream was empty.  No point in parsing.
-                return null;
             }
             forecastJsonStr = buffer.toString();
 
             try {
-                return getWeatherDataFromJson(forecastJsonStr, locationQuery);
+                getWeatherDataFromJson(forecastJsonStr, locationQuery);
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
             }
 
         } catch (IOException e) {
             Log.e(TAG, "Error: " + e.getMessage());
-            return null;
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
@@ -132,9 +127,7 @@ public class FletchForecastData extends AsyncTask<String, Void, Void> {
                 }
             }
         }
-        return null;
     }
-
 
     private Void getWeatherDataFromJson(String forecastJsonStr,
                                         String locationSetting)
@@ -249,16 +242,16 @@ public class FletchForecastData extends AsyncTask<String, Void, Void> {
 
                 ContentValues weatherValues = new ContentValues();
 
-                weatherValues.put(WeatherEntry.COLUMN_LOC_KEY, locationId);
-                weatherValues.put(WeatherEntry.COLUMN_DATE, dateTime);
-                weatherValues.put(WeatherEntry.COLUMN_HUMIDITY, humidity);
-                weatherValues.put(WeatherEntry.COLUMN_PRESSURE, pressure);
-                weatherValues.put(WeatherEntry.COLUMN_WIND_SPEED, windSpeed);
-                weatherValues.put(WeatherEntry.COLUMN_DEGREES, windDirection);
-                weatherValues.put(WeatherEntry.COLUMN_MAX_TEMP, high);
-                weatherValues.put(WeatherEntry.COLUMN_MIN_TEMP, low);
-                weatherValues.put(WeatherEntry.COLUMN_SHORT_DESC, description);
-                weatherValues.put(WeatherEntry.COLUMN_WEATHER_ID, weatherId);
+                weatherValues.put(WeatherContract.WeatherEntry.COLUMN_LOC_KEY, locationId);
+                weatherValues.put(WeatherContract.WeatherEntry.COLUMN_DATE, dateTime);
+                weatherValues.put(WeatherContract.WeatherEntry.COLUMN_HUMIDITY, humidity);
+                weatherValues.put(WeatherContract.WeatherEntry.COLUMN_PRESSURE, pressure);
+                weatherValues.put(WeatherContract.WeatherEntry.COLUMN_WIND_SPEED, windSpeed);
+                weatherValues.put(WeatherContract.WeatherEntry.COLUMN_DEGREES, windDirection);
+                weatherValues.put(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP, high);
+                weatherValues.put(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP, low);
+                weatherValues.put(WeatherContract.WeatherEntry.COLUMN_SHORT_DESC, description);
+                weatherValues.put(WeatherContract.WeatherEntry.COLUMN_WEATHER_ID, weatherId);
 
                 cVVector.add(weatherValues);
             }
@@ -268,7 +261,7 @@ public class FletchForecastData extends AsyncTask<String, Void, Void> {
             if (cVVector.size() > 0) {
                 ContentValues[] cvArray = new ContentValues[cVVector.size()];
                 cVVector.toArray(cvArray);
-                inserted = mContext.getContentResolver().bulkInsert(WeatherEntry.CONTENT_URI, cvArray);
+                inserted = getContentResolver().bulkInsert(WeatherContract.WeatherEntry.CONTENT_URI, cvArray);
             }
 
             Log.d(TAG, "FetchWeatherTask Complete. " + Integer.toString(inserted) + " Inserted");
@@ -295,7 +288,7 @@ public class FletchForecastData extends AsyncTask<String, Void, Void> {
 
         long locationId;
 
-        Cursor locationCur = mContext.getContentResolver().query(
+        Cursor locationCur = getContentResolver().query(
                 WeatherContract.LocationEntry.CONTENT_URI,
                 new String[]{WeatherContract.LocationEntry._ID},
                 WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
@@ -316,7 +309,7 @@ public class FletchForecastData extends AsyncTask<String, Void, Void> {
             contentValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LAT, lat);
             contentValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LONG, lon);
 
-            Uri uri = mContext.getContentResolver().insert(WeatherContract.LocationEntry.CONTENT_URI, contentValues);
+            Uri uri = getContentResolver().insert(WeatherContract.LocationEntry.CONTENT_URI, contentValues);
 
             locationId = ContentUris.parseId(uri);
         }
@@ -324,5 +317,15 @@ public class FletchForecastData extends AsyncTask<String, Void, Void> {
         locationCur.close();
 
         return locationId;
+    }
+
+    public static class AlarmReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Intent sendIntent = new Intent(context, SunshineService.class);
+            sendIntent.putExtra(SunshineService.LOCATION_QUERY_EXTRA, intent.getStringExtra(SunshineService.LOCATION_QUERY_EXTRA));
+            context.startService(sendIntent);
+        }
     }
 }
