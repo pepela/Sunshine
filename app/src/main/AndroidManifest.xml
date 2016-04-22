@@ -47,8 +47,6 @@
                 android:value="com.pepela.sunshine.sunshine.MainActivity" />
         </activity>
 
-        <service android:name=".service.SunshineService" />
-        <receiver android:name=".service.SunshineService$AlarmReceiver" />
 
         <service android:name=".sync.SunshineAuthenticatorService">
             <intent-filter>

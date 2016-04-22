@@ -2,12 +2,15 @@ package com.pepela.sunshine.sunshine;
 
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.SyncAdapterType;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+
+import com.pepela.sunshine.sunshine.sync.SunshineSyncAdapter;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings.
@@ -65,6 +68,7 @@ public class SettingsActivity extends PreferenceActivity
             // For other preferences, set the summary to the value's simple string representation.
             preference.setSummary(stringValue);
         }
+        SunshineSyncAdapter.syncImmediately(getApplicationContext());
         return true;
     }
 

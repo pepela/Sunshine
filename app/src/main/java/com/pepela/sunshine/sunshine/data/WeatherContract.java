@@ -21,6 +21,8 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.format.Time;
 
+import java.util.Date;
+
 /**
  * Defines table and column names for the weather database.
  */

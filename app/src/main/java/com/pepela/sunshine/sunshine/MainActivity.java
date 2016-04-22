@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.pepela.sunshine.sunshine.sync.SunshineSyncAdapter;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -50,6 +52,8 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
 
         ForecastFragment forecastFragment = ((ForecastFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_forecast));
         forecastFragment.setUseTodayLayout(!mTwoPane);
+
+        SunshineSyncAdapter.initializeSyncAdapter(this);
 
         mLocation = Utility.getPreferredLocation(this);
     }
@@ -95,42 +99,12 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
                 startActivity(settingsIntent);
                 return true;
-            case R.id.action_view_location_on_map:
-                openLocationInMap();
-                return true;
         }
 
 
         return super.onOptionsItemSelected(item);
     }
-
-    private void openLocationInMap() {
-        Geocoder geoCoder = new Geocoder(this, Locale.getDefault());
-        try {
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-            String location = sharedPreferences.getString(
-                    getString(R.string.pref_location_key),
-                    getString(R.string.pref_location_default));
-
-            List<Address> addresses = geoCoder.getFromLocationName(
-                    location, 1);
-            if (addresses.size() > 0) {
-                String coordinates = "geo:" + String.valueOf(addresses.get(0).getLatitude()) + "," + String.valueOf(addresses.get(0).getLongitude());
-                Intent i = new
-                        Intent(android.content.Intent.ACTION_VIEW,
-                        Uri.parse(coordinates));
-
-                if (i.resolveActivity(getPackageManager()) != null) {
-                    startActivity(i);
-                } else {
-                    Log.e(MainActivity.class.getSimpleName(), "Error starting map intent.");
-                }
-            }
-        } catch (IOException e) {
-            Log.e(MainActivity.class.getSimpleName(), "Error getting location: " + e.getMessage());
-        }
-    }
-
+    
     @Override
     public void onItemSelected(Uri dateUri) {
         if (mTwoPane) {

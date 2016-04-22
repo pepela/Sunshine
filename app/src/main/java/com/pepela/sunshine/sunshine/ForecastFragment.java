@@ -1,15 +1,16 @@
 package com.pepela.sunshine.sunshine;
 
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.graphics.ComposeShader;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
-import android.telecom.Call;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,10 +26,11 @@ import android.support.v4.content.CursorLoader;
 import android.view.MenuInflater;
 
 import com.pepela.sunshine.sunshine.data.WeatherContract;
-import com.pepela.sunshine.sunshine.service.SunshineService;
 import com.pepela.sunshine.sunshine.sync.SunshineSyncAdapter;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 
 public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -38,10 +40,11 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     private ListView mListView;
     private boolean mUseTodayLayout;
 
-    public interface Callback {
-        public void onItemSelected(Uri dateUri);
-    }
+    private static final String TAG = ForecastFragment.class.getSimpleName();
 
+    public interface Callback {
+        void onItemSelected(Uri dateUri);
+    }
 
     ForecastAdapter mForecastAdapter;
 
@@ -138,37 +141,69 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         int id = item.getItemId();
 
         switch (id) {
-            case R.id.action_refresh:
-                UpdateWeather();
-
+            case R.id.action_view_location_on_map:
+                openPreferredLocationInMap();
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
 
+    private void openPreferredLocationInMap() {
+        // Using the URI scheme for showing a location found on a map.  This super-handy
+        // intent can is detailed in the "Common Intents" page of Android's developer site:
+        // http://developer.android.com/guide/components/intents-common.html#Maps
+        if (null != mForecastAdapter) {
+            Cursor c = mForecastAdapter.getCursor();
+            if (null != c) {
+                c.moveToPosition(0);
+                String posLat = c.getString(COL_COORD_LAT);
+                String posLong = c.getString(COL_COORD_LONG);
+                Uri geoLocation = Uri.parse("geo:" + posLat + "," + posLong);
+
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(geoLocation);
+
+                if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+                    startActivity(intent);
+                } else {
+                    Log.d(TAG, "Couldn't call " + geoLocation.toString() + ", no receiving apps installed!");
+                }
+            }
+
+        }
+    }
+
+    private void openLocationInMap() {
+        Context context = getContext();
+        Geocoder geoCoder = new Geocoder(context, Locale.getDefault());
+        try {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+            String location = sharedPreferences.getString(
+                    getString(R.string.pref_location_key),
+                    getString(R.string.pref_location_default));
+
+            List<Address> addresses = geoCoder.getFromLocationName(
+                    location, 1);
+            if (addresses.size() > 0) {
+                String coordinates = "geo:" + String.valueOf(addresses.get(0).getLatitude()) + "," + String.valueOf(addresses.get(0).getLongitude());
+                Intent i = new
+                        Intent(android.content.Intent.ACTION_VIEW,
+                        Uri.parse(coordinates));
+
+                if (i.resolveActivity(context.getPackageManager()) != null) {
+                    startActivity(i);
+                } else {
+                    Log.e(TAG, "Error starting map intent.");
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error getting location: " + e.getMessage());
+        }
+    }
+
     private void UpdateWeather() {
-//        AlarmManager alarmMgr;
-//        PendingIntent alarmIntent;
-//        Intent intent;
-//
-//        alarmMgr = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-//
-//        intent = new Intent(getContext(), SunshineService.AlarmReceiver.class);
-//        intent.putExtra(SunshineService.LOCATION_QUERY_EXTRA,
-//                Utility.getPreferredLocation(getActivity()));
-//
-//        alarmIntent = PendingIntent.getBroadcast(getContext(), 0, intent, 0);
-//
-//
-//        alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP,
-//                0,
-//                AlarmManager.INTERVAL_HALF_DAY,
-//                alarmIntent);
-
-
         SunshineSyncAdapter.syncImmediately(getContext());
-
     }
 
 
