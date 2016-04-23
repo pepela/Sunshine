@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Address;
 import android.location.Geocoder;
+import android.media.MediaExtractor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -24,6 +25,7 @@ import android.support.v4.content.Loader;
 import android.support.v4.content.CursorLoader;
 
 import android.view.MenuInflater;
+import android.widget.TextView;
 
 import com.pepela.sunshine.sunshine.data.WeatherContract;
 import com.pepela.sunshine.sunshine.sync.SunshineSyncAdapter;
@@ -33,7 +35,7 @@ import java.util.List;
 import java.util.Locale;
 
 
-public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String SELECTED_KEY = "selected_key";
     private int mPosition;
@@ -41,6 +43,13 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     private boolean mUseTodayLayout;
 
     private static final String TAG = ForecastFragment.class.getSimpleName();
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals(getContext().getString(R.string.pref_location_status_key))) {
+            updateEmptyView();
+        }
+    }
 
     public interface Callback {
         void onItemSelected(Uri dateUri);
@@ -83,6 +92,19 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         setHasOptionsMenu(true);
     }
 
+    @Override
+    public void onResume() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        super.onPause();
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -95,12 +117,14 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
+        View emptyView = rootView.findViewById(R.id.listview_forecast_empty);
 
         mForecastAdapter = new ForecastAdapter(getActivity(), null, 0);
         mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
 
         mListView = (ListView) rootView.findViewById(R.id.listview_forecast);
         mListView.setAdapter(mForecastAdapter);
+        mListView.setEmptyView(emptyView);
 
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -231,12 +255,40 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         if (mPosition != ListView.INVALID_POSITION) {
             mListView.setSelection(mPosition);
         }
+        updateEmptyView();
     }
 
     @Override
     public void onLoaderReset(Loader loader) {
         mForecastAdapter.swapCursor(null);
 
+    }
+
+    private void updateEmptyView() {
+        if (mForecastAdapter.isEmpty()) {
+            TextView emptyView = (TextView) mListView.getEmptyView();
+            if (emptyView != null) {
+                int messageId = R.string.empty_forecast_list_view;
+                @SunshineSyncAdapter.LocationStatus int locationStatus = Utility.getLocationStatus(getContext());
+                switch (locationStatus) {
+                    case SunshineSyncAdapter.LOCATION_STATUS_SERVER_DOWN:
+                        messageId = R.string.empty_forecast_list_server_down;
+                        break;
+                    case SunshineSyncAdapter.LOCATION_STATUS_SERVER_INVALID:
+                        messageId = R.string.empty_forecast_list_server_error;
+                        break;
+                    case SunshineSyncAdapter.LOCATION_STATUS_INVALID:
+                        messageId = R.string.empty_forecast_list_invalid_location;
+                        break;
+                    default:
+                        if (!Utility.isNetworkAvailable(getContext())) {
+                            messageId = R.string.empty_forecast_list_view_no_network;
+                        }
+                }
+                emptyView.setText(getString(messageId));
+
+            }
+        }
     }
 
     public void onLocationChanged() {

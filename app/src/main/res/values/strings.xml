@@ -7,6 +7,7 @@
     <string name="pref_location_default" translatable="false">Tallinn</string>
     <string name="pref_location_title">Location</string>
     <string name="pref_location_key" translatable="false">location</string>
+    <string name="pref_location_status_key">loc-status</string>
     <string name="pref_units_default">Metric</string>
     <string name="pref_units_title">Units</string>
     <string name="pref_units_key">units</string>
@@ -17,6 +18,19 @@
     <string name="action_share">Share</string>
     <string name="today">Today</string>
     <string name="tomorrow">Tomorrow</string>
+
+    <!-- empty view texts -->
+    <string name="empty_forecast_list_view">No weather information available</string>
+    <string name="empty_forecast_list_server_down">No weather information available. The server is not returning data.</string>
+    <string name="empty_forecast_list_server_error">No weather information available. The server is not returning valid data. Please check for an updated version of Sunshine.</string>
+    <string name="empty_forecast_list_view_no_network">No weather information available. The network is not available</string>
+    <string name="empty_forecast_list_invalid_location">No weather information available. The location in settings is not recognized by the weather server.</string>
+
+
+    <!-- Strings used when displaying the state of the Location in settings -->
+    <string name="pref_location_error_description">Invalid Location (<xliff:g id="location_setting">%1$s</xliff:g>)"</string>
+    <string name="pref_location_unknown_description">Validating Location... (<xliff:g id="location_setting">%1$s</xliff:g>)"</string>
+
     <string name="format_full_friendly_date">
         <xliff:g id="day">%1$s</xliff:g>, <xliff:g id="date">%2$s
     </xliff:g></string>

@@ -1,7 +1,9 @@
 package com.pepela.sunshine.sunshine;
 
+import android.animation.ObjectAnimator;
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.SyncAdapterType;
 import android.os.Build;
 import android.os.Bundle;
@@ -9,8 +11,12 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.security.keystore.KeyNotYetValidException;
 
+import com.pepela.sunshine.sunshine.data.WeatherContract;
 import com.pepela.sunshine.sunshine.sync.SunshineSyncAdapter;
+
+import java.util.List;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings.
@@ -21,7 +27,8 @@ import com.pepela.sunshine.sunshine.sync.SunshineSyncAdapter;
  * API Guide</a> for more information on developing a Settings UI.
  */
 public class SettingsActivity extends PreferenceActivity
-        implements Preference.OnPreferenceChangeListener {
+        implements Preference.OnPreferenceChangeListener,
+        SharedPreferences.OnSharedPreferenceChangeListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -35,6 +42,20 @@ public class SettingsActivity extends PreferenceActivity
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_units_key)));
     }
 
+    @Override
+    protected void onResume() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        super.onPause();
+    }
+
     /**
      * Attaches a listener so the summary is always updated with the preference value.
      * Also fires the listener once, to initialize the summary (so it shows up before the value
@@ -46,34 +67,71 @@ public class SettingsActivity extends PreferenceActivity
 
         // Trigger the listener immediately with the preference's
         // current value.
-        onPreferenceChange(preference,
+        setPreferenceSummary(preference,
                 PreferenceManager
                         .getDefaultSharedPreferences(preference.getContext())
                         .getString(preference.getKey(), ""));
     }
 
-    @Override
-    public boolean onPreferenceChange(Preference preference, Object value) {
+
+    private void setPreferenceSummary(Preference preference, Object value) {
         String stringValue = value.toString();
+        String key = preference.getKey();
 
         if (preference instanceof ListPreference) {
-            // For list preferences, look up the correct display value in
-            // the preference's 'entries' list (since they have separate labels/values).
             ListPreference listPreference = (ListPreference) preference;
             int prefIndex = listPreference.findIndexOfValue(stringValue);
             if (prefIndex >= 0) {
                 preference.setSummary(listPreference.getEntries()[prefIndex]);
             }
+        } else if (key.equals(getString(R.string.pref_location_key))) {
+            @SunshineSyncAdapter.LocationStatus int locationStatus = Utility.getLocationStatus(this);
+            switch (locationStatus) {
+                case SunshineSyncAdapter.LOCATION_STATUS_OK:
+                    preference.setSummary(stringValue);
+                    break;
+                case SunshineSyncAdapter.LOCATION_STATUS_UNKNOWN:
+                    preference.setSummary(getString(R.string.pref_location_unknown_description, stringValue));
+                    break;
+                case SunshineSyncAdapter.LOCATION_STATUS_INVALID:
+                    preference.setSummary(getString(R.string.pref_location_error_description, stringValue));
+                    break;
+                default:
+                    preference.setSummary(stringValue);
+                    break;
+            }
         } else {
-            // For other preferences, set the summary to the value's simple string representation.
             preference.setSummary(stringValue);
         }
-        SunshineSyncAdapter.syncImmediately(getApplicationContext());
+
+    }
+
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object value) {
+        setPreferenceSummary(preference, value);
+
         return true;
     }
 
     @Override
     public Intent getParentActivityIntent() {
         return super.getParentActivityIntent().addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if ( key.equals(getString(R.string.pref_location_key)) ) {
+            // we've changed the location
+            // first clear locationStatus
+            Utility.resetLocationStatus(this);
+            SunshineSyncAdapter.syncImmediately(this);
+        } else if ( key.equals(getString(R.string.pref_units_key)) ) {
+            // units have changed. update lists of weather entries accordingly
+            getContentResolver().notifyChange(WeatherContract.WeatherEntry.CONTENT_URI, null);
+        } else if ( key.equals(getString(R.string.pref_location_status_key)) ) {
+            // our location status has changed.  Update the summary accordingly
+            Preference locationPreference = findPreference(getString(R.string.pref_location_key));
+            bindPreferenceSummaryToValue(locationPreference);
+        }
     }
 }

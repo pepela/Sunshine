@@ -3,9 +3,15 @@ package com.pepela.sunshine.sunshine;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.support.v7.widget.DialogTitle;
 import android.text.format.Time;
 import android.util.Log;
+
+import com.pepela.sunshine.sunshine.sync.SunshineSyncAdapter;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -85,6 +91,13 @@ public class Utility {
             SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("EEE MMM dd");
             return shortenedDateFormat.format(dateInMillis);
         }
+    }
+
+    public static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
     /**
@@ -237,5 +250,23 @@ public class Utility {
         Log.e("WeatherId not found: ", Integer.toString(conditionId));
         return R.mipmap.ic_launcher;
 
+    }
+
+    @SuppressWarnings("ResourceType")
+    public static
+    @SunshineSyncAdapter.LocationStatus
+    int getLocationStatus(Context context) {
+        SharedPreferences sharedPreferences
+                = PreferenceManager.getDefaultSharedPreferences(context);
+
+        return sharedPreferences.getInt(context.getString(R.string.pref_location_status_key), SunshineSyncAdapter.LOCATION_STATUS_UNKNOWN);
+    }
+
+    public static void resetLocationStatus(Context context) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(context.getString(R.string.pref_location_status_key), SunshineSyncAdapter.LOCATION_STATUS_UNKNOWN);
+
+        editor.commit();
     }
 }
