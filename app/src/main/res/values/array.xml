@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="http://schemas.android.com/tools">
 
+    <!-- strings for weather unit preferences -->
     <string-array name="pref_units_names">
         <item>Metric</item>
         <item>Imperial</item>
@@ -10,4 +11,17 @@
         <item>Metric</item>
         <item>Imperial</item>
     </string-array>
+
+
+    <!-- strings for weather icon pack preferences -->
+    <string-array name="pref_icon_pack_names">
+        <item>@string/pref_art_pack_label_sunshine</item>
+        <item>@string/pref_art_pack_label_cute_dogs</item>
+    </string-array>
+
+    <string-array name="pref_icon_pack_values">
+        <item>@string/pref_art_pack_sunshine</item>
+        <item>@string/pref_art_pack_cute_dogs</item>
+    </string-array>
+
 </resources>

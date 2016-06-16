@@ -68,4 +68,22 @@
     <string name="pref_enable_notifications_true">Enabled</string>
     <string name="pref_enable_notifications_false">Not Enabled</string>
     <string name="pref_enable_notifications_default" translatable="false">true</string>
+
+    <!-- string for icon pack preference -->
+    <string name="pref_icon_pack_title">Icon pack</string>
+    <string name="pref_icon_pack_key">icons</string>
+    <string name="pref_icon_pack_summary">Choose icon pack</string>
+
+    <!-- Format for retrieving art from an external source [CHAR LIMIT=NONE] -->
+    <string name="format_art_url" translatable="false">
+        https://raw.githubusercontent.com/udacity/Sunshine-Version-2/sunshine_master/app/src/main/res/drawable-xxhdpi/art_<xliff:g id="description">%s</xliff:g>.png
+    </string>
+    <string name="pref_art_pack_label_sunshine">Default</string>
+    <string name="pref_art_pack_label_cute_dogs">Same as default</string>
+
+    <!-- Value in SharedPreferences for icon art pack option [CHAR LIMIT=NONE] -->
+    <string name="pref_art_pack_sunshine" translatable="false">https://raw.githubusercontent.com/udacity/Sunshine-Version-2/sunshine_master/app/src/main/res/drawable-xxhdpi/art_%s.png</string>
+    <string name="pref_art_pack_cute_dogs" translatable="false">https://raw.githubusercontent.com/udacity/Sunshine-Version-2/sunshine_master/app/src/main/res/drawable-mdpi/art_%s.png</string>
+
+
 </resources>

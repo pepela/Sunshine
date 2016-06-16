@@ -11,7 +11,6 @@
         app:maxLength="20"
         app:minLength="3" />
 
-
     <ListPreference
         android:defaultValue="@string/pref_units_default"
         android:entries="@array/pref_units_names"
@@ -26,4 +25,11 @@
         android:summaryOff="@string/pref_enable_notifications_false"
         android:summaryOn="@string/pref_enable_notifications_true"
         android:title="@string/pref_enable_notifications_label" />
+
+    <ListPreference
+        android:entries="@array/pref_icon_pack_names"
+        android:entryValues="@array/pref_icon_pack_values"
+        android:key="@string/pref_icon_pack_key"
+        android:summary="@string/pref_icon_pack_summary"
+        android:title="@string/pref_icon_pack_title" />
 </PreferenceScreen>

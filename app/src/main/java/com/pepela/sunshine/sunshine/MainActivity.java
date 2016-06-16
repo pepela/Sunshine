@@ -13,6 +13,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.bumptech.glide.Glide;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.pepela.sunshine.sunshine.sync.SunshineSyncAdapter;
 
 import java.io.IOException;
@@ -23,6 +26,8 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
 
     private static final String FORECASTFRAGMENT_TAG = "FORECAST_FRAGMENT_TAG";
     private static final String DETAILFRAGMENT_TAG = "DFTAG";
+    private static final int PLAY_SERVICES_RESOLUTION_CODE = 69;
+    public static final String SENT_TOKEN_TO_SERVER = "sentTokenToServer";
     private String mLocation;
 
     private boolean mTwoPane;
@@ -56,6 +61,10 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         SunshineSyncAdapter.initializeSyncAdapter(this);
 
         mLocation = Utility.getPreferredLocation(this);
+
+        if(!checkGooglePlayService()){
+
+        }
     }
 
 
@@ -104,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
 
         return super.onOptionsItemSelected(item);
     }
-    
+
     @Override
     public void onItemSelected(Uri dateUri) {
         if (mTwoPane) {
@@ -122,5 +131,19 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
                     .setData(dateUri);
             startActivity(intent);
         }
+    }
+
+    private boolean checkGooglePlayService() {
+        GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (googleApiAvailability.isUserResolvableError(resultCode)) {
+                googleApiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_CODE).show();
+            } else
+                finish();
+        } else {
+            return false;
+        }
+        return true;
     }
 }
